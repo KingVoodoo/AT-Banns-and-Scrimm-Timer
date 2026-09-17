@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ATXXII Ban Picker & Match Timer</title>
+  <link rel="stylesheet" href="./src/styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="app" class="app-container">
+    <!-- Tactical Top Navigation Header -->
+    <header class="app-header" data-tauri-drag-region>
+      <div class="header-brand" data-tauri-drag-region>
+        <img src="./src/assets/at-logo.png" alt="Alliance Tournament Logo" class="brand-logo" data-tauri-drag-region />
+        <div class="brand-text" data-tauri-drag-region>
+          <h1 class="brand-title" data-tauri-drag-region>BAN PICKER & MATCH TIMER</h1>
+          <span class="brand-sub" data-tauri-drag-region>ALLIANCE TOURNAMENT XXII UTILITY</span>
+        </div>
+        <span class="version-badge" id="app-version">v1.0.0</span>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="tabs-nav" role="tablist" aria-label="Main Navigation">
+        <button id="tab-btn-landing" class="tab-btn active" role="tab" aria-selected="true" aria-controls="tab-content-landing" data-tab="landing">
+          <span class="tab-index">01</span>
+          <span class="tab-label">TEAMS</span>
+        </button>
+        <button id="tab-btn-bans" class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-content-bans" data-tab="bans">
+          <span class="tab-index">02</span>
+          <span class="tab-label">BANS</span>
+        </button>
+        <button id="tab-btn-timer" class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-content-timer" data-tab="timer">
+          <span class="tab-index">03</span>
+          <span class="tab-label">TIMER</span>
+        </button>
+      </nav>
+
+      <!-- Tactical Controls & Window Chrome -->
+      <div class="header-actions">
+        <button id="btn-always-on-top" class="action-btn pin-btn" title="Toggle Always-on-Top">
+          <span class="pin-indicator" id="pin-indicator"></span>
+          <svg class="pin-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2v8m0 0l-3-3m3 3l3-3M5 10h14l-2 10H7L5 10z"/>
+          </svg>
+          <span class="btn-text">ALWAYS ON TOP</span>
+        </button>
+
+        <button id="btn-popout-timer" class="action-btn popout-btn" title="Pop Out Floating HUD (Designed for placing over your EVE Online client • Always-on-Top)">
+          <svg class="popout-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M15 3h6v6M10 14L21 3M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/>
+          </svg>
+          <span class="btn-text">POP OUT</span>
+        </button>
+
+        <!-- Compact Local EVE Pilot Profile Widget -->
+        <button type="button" id="btn-header-profile" class="header-profile-btn" title="View & Manage Local EVE Pilot Profile">
+          <img id="header-profile-portrait" class="header-profile-img hidden" alt="Pilot Portrait" />
+          <span id="header-profile-fallback" class="header-profile-avatar-fallback">👤</span>
+          <div class="header-profile-text">
+            <span class="header-profile-name" id="header-profile-char-name">PILOT SETUP</span>
+            <span class="header-profile-meta" id="header-profile-meta-line">Not configured</span>
+          </div>
+          <span class="header-profile-role-tag" id="header-profile-role-tag">MEMBER</span>
+        </button>
+
+        <button type="button" id="btn-session-manager" class="session-pill-btn" title="Manage Tournament Session & Drafting Roles">
+          <span class="status-dot online"></span>
+          <span class="session-text" id="header-session-display">SESSION: AT-4821</span>
+          <span class="role-pill-badge" id="header-role-badge">🛡️ REFEREE</span>
+        </button>
+
+        <!-- Custom Headless Window Controls -->
+        <div class="window-controls">
+          <button id="btn-win-min" class="win-control-btn min" title="Minimize Window">
+            <svg viewBox="0 0 10 10" width="10" height="10"><path d="M1 5h8" stroke="currentColor" stroke-width="1.5"/></svg>
+          </button>
+          <button id="btn-win-max" class="win-control-btn max" title="Maximize / Restore Window">
+            <svg viewBox="0 0 10 10" width="10" height="10"><rect x="1.5" y="1.5" width="7" height="7" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+          </button>
+          <button id="btn-win-close" class="win-control-btn close" title="Close Window">
+            <svg viewBox="0 0 10 10" width="10" height="10"><path d="M1 1l8 8M9 1L1 9" stroke="currentColor" stroke-width="1.5"/></svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main View Area -->
+    <main class="main-content">
+      <!-- TAB 1: LANDING & TEAM SETUP VIEW -->
+      <section id="tab-content-landing" class="tab-pane active" role="tabpanel" aria-labelledby="tab-btn-landing">
+        <div class="landing-container">
+          <!-- Tactical Hero Header -->
+          <div class="landing-hero">
+            <div class="hero-badge">
+              <span class="hero-badge-dot"></span>
+              <span>ALLIANCE TOURNAMENT XXII • FLEET DISPATCH</span>
+            </div>
+            <h2 class="hero-title">FLEET COMMAND & TEAM INITIALIZATION</h2>
+            <p class="hero-desc">
+              Designate competing tournament alliances, team commanders, and series parameters before deploying into the 5-set serpentine ban phase.
+            </p>
+          </div>
+
+          <!-- Team Versus Setup Grid -->
+          <div class="landing-grid">
+            <!-- TEAM A CARD (FIRST PICK / BLUE) -->
+            <div class="landing-team-card team-a-card">
+              <div class="landing-card-header">
+                <div class="landing-team-tag team-a">
+                  <span class="side-indicator"></span>
+                  <span>TEAM A • FIRST BAN / PICK</span>
+                </div>
+                <span class="seed-badge">SIDE 1 (TURNS 1, 4, 5)</span>
+              </div>
+
+              <div class="landing-card-body">
+                <div class="form-group">
+                  <label for="input-team-a-name" class="form-label">ALLIANCE / FLEET NAME</label>
+                  <div class="input-wrapper">
+                    <input type="text" id="input-team-a-name" class="tactical-input" placeholder="e.g. Northern Coalition." value="BLUE FLEET" />
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group flex-2">
+                    <label for="input-team-a-captain" class="form-label">CAPTAIN / FLEET COMMANDER</label>
+                    <div class="input-wrapper">
+                      <input type="text" id="input-team-a-captain" class="tactical-input" placeholder="e.g. FC Callsign" value="Captain Alpha" />
+                    </div>
+                  </div>
+                  <div class="form-group flex-1">
+                    <label for="input-team-a-ticker" class="form-label">TICKER</label>
+                    <div class="input-wrapper">
+                      <input type="text" id="input-team-a-ticker" class="tactical-input ticker-input" placeholder="e.g. NC" value="BLU" maxlength="6" />
+                    </div>
+                  </div>
+                </div>
+
+                <div class="team-logo-preview-box" id="team-a-logo-box">
+                  <div class="logo-circle">
+                    <img id="landing-logo-team-a" class="alliance-logo-img hidden" alt="Team A Logo" />
+                    <span id="landing-logo-fallback-a" class="logo-fallback-icon">BLU</span>
+                  </div>
+                  <div class="logo-meta">
+                    <span class="logo-status-label" id="landing-logo-status-a">ALLIANCE INSIGNIA</span>
+                    <span class="logo-sub" id="landing-logo-sub-a">Auto-resolves from EVE ESI</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- VS DIVIDER & QUICK ACTIONS -->
+            <div class="landing-vs-column">
+              <div class="landing-vs-badge">VS</div>
+              <button type="button" id="btn-swap-teams" class="action-btn btn-swap-sides" title="Swap Team A and Team B sides">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M7 16V4m0 0L3 8m4-4l4 4m6 4v12m0 0l4-4m-4 4l-4-4"/>
+                </svg>
+                <span>SWAP SIDES</span>
+              </button>
+              <div class="match-meta-box">
+                <span class="meta-line"><strong class="highlight-cyan">5-SET</strong> SERIES</span>
+                <span class="meta-line highlight-cyan">ALTERNATING FIRST BAN</span>
+                <span class="meta-line">SET 1, 3, 5: A → B → B → A → A → B</span>
+                <span class="meta-line">SET 2, 4: B → A → A → B → B → A</span>
+                <span class="meta-line highlight-gold">⚓ FLAGSHIPS IMMUNE</span>
+              </div>
+            </div>
+
+            <!-- TEAM B CARD (COUNTER PICK / RED) -->
+            <div class="landing-team-card team-b-card">
+              <div class="landing-card-header">
+                <div class="landing-team-tag team-b">
+                  <span class="side-indicator"></span>
+                  <span>TEAM B • COUNTER BAN</span>
+                </div>
+                <span class="seed-badge">SIDE 2 (TURNS 2, 3, 6)</span>
+              </div>
+
+              <div class="landing-card-body">
+                <div class="form-group">
+                  <label for="input-team-b-name" class="form-label">ALLIANCE / FLEET NAME</label>
+                  <div class="input-wrapper">
+                    <input type="text" id="input-team-b-name" class="tactical-input" placeholder="e.g. The Tuskers Co." value="RED FLEET" />
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group flex-2">
+                    <label for="input-team-b-captain" class="form-label">CAPTAIN / FLEET COMMANDER</label>
+                    <div class="input-wrapper">
+                      <input type="text" id="input-team-b-captain" class="tactical-input" placeholder="e.g. FC Callsign" value="Captain Bravo" />
+                    </div>
+                  </div>
+                  <div class="form-group flex-1">
+                    <label for="input-team-b-ticker" class="form-label">TICKER</label>
+                    <div class="input-wrapper">
+                      <input type="text" id="input-team-b-ticker" class="tactical-input ticker-input" placeholder="e.g. TUSK" value="RED" maxlength="6" />
+                    </div>
+                  </div>
+                </div>
+
+                <div class="team-logo-preview-box" id="team-b-logo-box">
+                  <div class="logo-circle">
+                    <img id="landing-logo-team-b" class="alliance-logo-img hidden" alt="Team B Logo" />
+                    <span id="landing-logo-fallback-b" class="logo-fallback-icon">RED</span>
+                  </div>
+                  <div class="logo-meta">
+                    <span class="logo-status-label" id="landing-logo-status-b">ALLIANCE INSIGNIA</span>
+                    <span class="logo-sub" id="landing-logo-sub-b">Auto-resolves from EVE ESI</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Action Launch Bar -->
+          <div class="landing-actions-bar">
+            <button type="button" id="btn-reset-team-defaults" class="action-btn btn-ghost">
+              <span>↺ RESET DEFAULTS</span>
+            </button>
+            <div class="landing-primary-actions">
+              <button type="button" id="btn-launch-timer-direct" class="action-btn btn-secondary">
+                <span>⏱ GO DIRECTLY TO TIMER</span>
+              </button>
+              <button type="button" id="btn-launch-scrim" class="scrim-btn btn-primary landing-launch-btn">
+                <span>🚀 CONFIRM TEAMS & ENTER BANS [SET 1]</span>
+                <span class="btn-subtext">Starts 5-Set Series</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Multiplayer Scrim Session Summary HUD (Phase 16) -->
+          <div class="session-hud-summary-bar" id="session-hud-summary-bar">
+            <div class="summary-item">
+              <span class="summary-label">SESSION</span>
+              <span class="summary-val highlight-gold" id="teams-session-code">AT22-X7KF</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">CAPTAIN A</span>
+              <span class="summary-val status-online" id="teams-cap-a-status">CONNECTED</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">CAPTAIN B</span>
+              <span class="summary-val" id="teams-cap-b-status">DISCONNECTED</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">PLAYERS</span>
+              <span class="summary-val" id="teams-players-count">1 / 20</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">PRIMARY</span>
+              <span class="summary-val highlight-cyan" id="teams-primary-coord">Captain A</span>
+            </div>
+            <div class="summary-actions">
+              <button type="button" id="btn-teams-create-session" class="action-btn btn-primary-sm" title="Start host coordinator networking service">
+                <span>⚡ CREATE SCRIM SESSION</span>
+              </button>
+              <button type="button" id="btn-teams-copy-join-info" class="action-btn btn-secondary-sm" title="Copy join information and credentials">
+                <span>📋 COPY JOIN INFO</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Fenris Creations Legal & EULA Notice Bar -->
+          <div class="landing-legal-bar">
+            <div class="landing-legal-badge">
+              <span class="legal-badge-icon">⚖</span>
+              <span>FENRIS CREATIONS EULA & IP NOTICE</span>
+            </div>
+            <div class="landing-legal-text">
+              <span>All EVE Online imagery, 3D ship models, renders, and logos are property of <strong>Fenris Creations hf.</strong> Used under Fenris Creations Content Creation Terms & EULA for non-commercial tournament utility.</span>
+            </div>
+            <button type="button" id="btn-landing-legal" class="action-btn btn-legal-link" title="Open full Fenris Creations EULA and copyright attribution notice">
+              <span>VIEW EULA / IP NOTICE</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: BANS VIEW -->
+      <section id="tab-content-bans" class="tab-pane" role="tabpanel" aria-labelledby="tab-btn-bans">
+        <div class="bans-container">
+          <!-- 5 Scrim Sets Navigation Bar -->
+          <div class="scrim-sets-bar">
+            <div class="sets-header-info">
+              <span class="sets-title">SCRIM SET:</span>
+              <div class="sets-selector-group" role="tablist" aria-label="Scrim Sets">
+                <button class="set-btn active" data-set="1" role="tab" aria-selected="true" title="Switch to Set 1">
+                  <span class="set-num">SET 1</span>
+                  <span class="set-dot" id="set-dot-1"></span>
+                </button>
+                <button class="set-btn" data-set="2" role="tab" aria-selected="false" title="Switch to Set 2">
+                  <span class="set-num">SET 2</span>
+                  <span class="set-dot" id="set-dot-2"></span>
+                </button>
+                <button class="set-btn" data-set="3" role="tab" aria-selected="false" title="Switch to Set 3">
+                  <span class="set-num">SET 3</span>
+                  <span class="set-dot" id="set-dot-3"></span>
+                </button>
+                <button class="set-btn" data-set="4" role="tab" aria-selected="false" title="Switch to Set 4">
+                  <span class="set-num">SET 4</span>
+                  <span class="set-dot" id="set-dot-4"></span>
+                </button>
+                <button class="set-btn" data-set="5" role="tab" aria-selected="false" title="Switch to Set 5">
+                  <span class="set-num">SET 5</span>
+                  <span class="set-dot" id="set-dot-5"></span>
+                </button>
+              </div>
+            </div>
+
+            <div class="sets-toolbar">
+              <button id="btn-toggle-all-sets-view" class="action-btn" title="View all 5 sets side-by-side">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="7" height="7"></rect>
+                  <rect x="14" y="3" width="7" height="7"></rect>
+                  <rect x="14" y="14" width="7" height="7"></rect>
+                  <rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+                <span>ALL 5 SETS OVERVIEW</span>
+              </button>
+              <button id="btn-copy-sets-clipboard" class="action-btn" title="Copy series ban summary to clipboard">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path>
+                </svg>
+                <span>COPY SUMMARY</span>
+              </button>
+              <button id="btn-reset-current-set" class="action-btn btn-danger-subtle" title="Reset bans for current set">
+                <span>CLEAR CURRENT SET</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Bans Header: Team A vs Team B -->
+          <div class="teams-versus-bar">
+            <!-- Team A Card -->
+            <div class="team-panel team-a" id="panel-team-a">
+              <div class="team-panel-header">
+                <div class="team-identity-left">
+                  <div class="team-logo-frame">
+                    <img id="team-a-header-logo" class="alliance-logo-img hidden" alt="Team A Logo" />
+                    <span id="team-a-header-fallback" class="team-logo-initials">A</span>
+                  </div>
+                  <div class="team-identity-text">
+                    <div class="team-badge-row">
+                      <span class="team-badge">TEAM A</span>
+                      <span class="team-role-pill" id="team-a-role-pill">FIRST BAN</span>
+                    </div>
+                    <div class="team-name" id="team-a-name">BLUE FLEET</div>
+                    <span class="captain-badge" id="team-a-captain">CAPTAIN: UNASSIGNED</span>
+                  </div>
+                </div>
+              </div>
+              <!-- Team A Flagship Designation -->
+              <div class="team-flagship-row">
+                <span class="flagship-label">FLAGSHIP:</span>
+                <button id="btn-flagship-team-a" class="flagship-select-btn" data-team="TEAM_A" title="Designate Team A Flagship (Immune to Bans)">
+                  <span class="flagship-icon">⚓</span>
+                  <span id="team-a-flagship-name" class="flagship-name">NONE DESIGNATED</span>
+                  <span class="flagship-badge">IMMUNE</span>
+                </button>
+              </div>
+              <!-- Ban Slots Row -->
+              <div class="ban-slots-container">
+                <span class="slots-label" id="team-a-slots-label">BANNED SHIPS (TURNS 1, 4, 5)</span>
+                <div class="ban-slots-row" id="team-a-bans">
+                  <div class="ban-slot empty" data-team="TEAM_A" data-slot="0"><span class="slot-idx">TURN 1 (BAN 1)</span><span class="ship-name">—</span></div>
+                  <div class="ban-slot empty" data-team="TEAM_A" data-slot="1"><span class="slot-idx">TURN 4 (BAN 2)</span><span class="ship-name">—</span></div>
+                  <div class="ban-slot empty" data-team="TEAM_A" data-slot="2"><span class="slot-idx">TURN 5 (BAN 3)</span><span class="ship-name">—</span></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- VS Centerpiece & Serpentine Ban Indicator -->
+            <div class="versus-center">
+              <div class="vs-badge">VS</div>
+
+              <!-- Active Session Role & Turn Guidance Banner -->
+              <div class="versus-role-bar" id="bans-role-indicator-bar">
+                <span class="role-badge-tag" id="bans-my-role-badge">🛡️ REFEREE</span>
+                <span class="role-action-hint" id="bans-role-turn-hint">Full Admin Draft Control</span>
+                <button type="button" id="btn-bans-switch-role" class="btn-role-change" title="Switch Drafting Role or Session Room">⚙️ ROLES</button>
+              </div>
+
+              <div class="phase-indicator">
+                <span class="phase-title" id="ban-phase-title">BAN ORDER (A B B A A B) • SET 1</span>
+                <span class="phase-status" id="ban-turn-status">READY TO START BANS</span>
+              </div>
+              <div class="ban-timer-preview" id="ban-timer-display" title="Turn Timer">00:30</div>
+              <div class="ban-action-btns">
+                <button id="btn-start-bans" class="action-btn btn-ban-start" title="Start Serpentine Ban Phase">START BANS</button>
+                <button id="btn-reset-bans" class="action-btn btn-ban-reset" title="Reset All Bans">RESET</button>
+                <button id="btn-edit-teams" class="action-btn btn-edit-teams" title="Edit Team Setup & Names">⚙️ TEAMS</button>
+              </div>
+            </div>
+
+            <!-- Team B Card -->
+            <div class="team-panel team-b" id="panel-team-b">
+              <div class="team-panel-header">
+                <div class="team-identity-left">
+                  <div class="team-logo-frame">
+                    <img id="team-b-header-logo" class="alliance-logo-img hidden" alt="Team B Logo" />
+                    <span id="team-b-header-fallback" class="team-logo-initials">B</span>
+                  </div>
+                  <div class="team-identity-text">
+                    <div class="team-badge-row">
+                      <span class="team-badge">TEAM B</span>
+                      <span class="team-role-pill" id="team-b-role-pill">COUNTER BAN</span>
+                    </div>
+                    <div class="team-name" id="team-b-name">RED FLEET</div>
+                    <span class="captain-badge" id="team-b-captain">CAPTAIN: UNASSIGNED</span>
+                  </div>
+                </div>
+              </div>
+              <!-- Team B Flagship Designation -->
+              <div class="team-flagship-row">
+                <span class="flagship-label">FLAGSHIP:</span>
+                <button id="btn-flagship-team-b" class="flagship-select-btn" data-team="TEAM_B" title="Designate Team B Flagship (Immune to Bans)">
+                  <span class="flagship-icon">⚓</span>
+                  <span id="team-b-flagship-name" class="flagship-name">NONE DESIGNATED</span>
+                  <span class="flagship-badge">IMMUNE</span>
+                </button>
+              </div>
+              <!-- Ban Slots Row -->
+              <div class="ban-slots-container">
+                <span class="slots-label" id="team-b-slots-label">BANNED SHIPS (TURNS 2, 3, 6)</span>
+                <div class="ban-slots-row" id="team-b-bans">
+                  <div class="ban-slot empty" data-team="TEAM_B" data-slot="0"><span class="slot-idx">TURN 2 (BAN 1)</span><span class="ship-name">—</span></div>
+                  <div class="ban-slot empty" data-team="TEAM_B" data-slot="1"><span class="slot-idx">TURN 3 (BAN 2)</span><span class="ship-name">—</span></div>
+                  <div class="ban-slot empty" data-team="TEAM_B" data-slot="2"><span class="slot-idx">TURN 6 (BAN 3)</span><span class="ship-name">—</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ship Pool Browser (Official ATXXII Google Sheet Ingestion) -->
+          <div class="ship-pool-section">
+            <div class="pool-header">
+              <div class="pool-title-group">
+                <div class="title-with-counter">
+                  <h3>ATXXII TOURNAMENT SHIP POOL</h3>
+                  <span class="counter-badge" id="ship-pool-count">278 SHIPS</span>
+                </div>
+                <span class="pool-subtitle">Season rules & exclusions enforced • Flagships cannot be banned</span>
+              </div>
+              <div class="pool-filter-bar">
+                <input type="text" id="ship-search-input" class="search-input" placeholder="Search hull, class, or faction..." />
+                <div class="filter-chips">
+                  <button class="chip active" data-filter="ALL">ALL</button>
+                  <button class="chip" data-filter="Battleship">BATTLESHIPS</button>
+                  <button class="chip" data-filter="Battlecruiser">BATTLECRUISERS</button>
+                  <button class="chip" data-filter="Cruiser">CRUISERS</button>
+                  <button class="chip" data-filter="Destroyer">DESTROYERS</button>
+                  <button class="chip" data-filter="Frigate">FRIGATES</button>
+                  <button class="chip" data-filter="Logistics">LOGISTICS</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Dynamic Ship Grid Rendered From Official Sheet Ingestion -->
+            <div class="ship-grid" id="ship-pool-grid"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: TIMER VIEW -->
+      <section id="tab-content-timer" class="tab-pane" role="tabpanel" aria-labelledby="tab-btn-timer">
+        <div class="timer-container">
+          <!-- Room Status & Sync Header -->
+          <div class="scrim-hud-bar">
+            <div class="hud-item cursor-pointer" id="timer-hud-session-item" title="Click to manage Tournament Session & Drafting Roles">
+              <span class="hud-label">SESSION / ROLE</span>
+              <span class="hud-val highlight" id="room-code-display">AT-4821 • 🛡️ REFEREE</span>
+            </div>
+            <div class="hud-item">
+              <span class="hud-label" id="timer-hud-team-a-label">TEAM A (BLUE FLEET)</span>
+              <span class="hud-val" id="timer-team-a-count">0 / 10 Players</span>
+            </div>
+            <div class="hud-item">
+              <span class="hud-label" id="timer-hud-team-b-label">TEAM B (RED FLEET)</span>
+              <span class="hud-val" id="timer-team-b-count">0 / 10 Players</span>
+            </div>
+            <div class="hud-item">
+              <span class="hud-label">READY STATUS</span>
+              <span class="hud-val" id="timer-ready-count">0 / 0 Ready</span>
+            </div>
+            <div class="hud-item sync-indicator">
+              <span class="hud-label">CLOCK SYNC</span>
+              <span class="hud-val sync-good" id="sync-status-display">LOCAL • ±0ms</span>
+            </div>
+          </div>
+
+          <!-- Timer 5 Scrim Sets Navigation Bar -->
+          <div class="timer-sets-nav">
+            <div class="timer-sets-info">
+              <span class="timer-sets-title">MATCH / SET:</span>
+              <div class="timer-sets-selector-group" role="tablist" aria-label="Timer Matches">
+                <button class="timer-set-btn active" data-set="1" role="tab" aria-selected="true" title="Switch to Match 1 Timer & Fleet Comp">
+                  <span class="t-set-label">MATCH 1</span>
+                  <span class="t-set-badge" id="timer-set-badge-1">STANDBY</span>
+                </button>
+                <button class="timer-set-btn" data-set="2" role="tab" aria-selected="false" title="Switch to Match 2 Timer & Fleet Comp">
+                  <span class="t-set-label">MATCH 2</span>
+                  <span class="t-set-badge" id="timer-set-badge-2">STANDBY</span>
+                </button>
+                <button class="timer-set-btn" data-set="3" role="tab" aria-selected="false" title="Switch to Match 3 Timer & Fleet Comp">
+                  <span class="t-set-label">MATCH 3</span>
+                  <span class="t-set-badge" id="timer-set-badge-3">STANDBY</span>
+                </button>
+                <button class="timer-set-btn" data-set="4" role="tab" aria-selected="false" title="Switch to Match 4 Timer & Fleet Comp">
+                  <span class="t-set-label">MATCH 4</span>
+                  <span class="t-set-badge" id="timer-set-badge-4">STANDBY</span>
+                </button>
+                <button class="timer-set-btn" data-set="5" role="tab" aria-selected="false" title="Switch to Match 5 Timer & Fleet Comp">
+                  <span class="t-set-label">MATCH 5</span>
+                  <span class="t-set-badge" id="timer-set-badge-5">STANDBY</span>
+                </button>
+              </div>
+            </div>
+            <div class="timer-nav-actions">
+              <span class="active-match-cite" id="active-match-title">MATCH 1 • SET 1 OF 5</span>
+              <button type="button" id="btn-sync-bans-to-timer" class="action-btn btn-timer-overview" title="View Series Ban Summary">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="7" height="7"></rect>
+                  <rect x="14" y="3" width="7" height="7"></rect>
+                  <rect x="14" y="14" width="7" height="7"></rect>
+                  <rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+                <span>ALL 5 SETS OVERVIEW</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Main Layout: Flanking 10-Slot Referee Marshalling Panels + Center Clock -->
+          <div class="timer-marshalling-layout">
+            <!-- Left: Team A Referee Fleet Marshalling -->
+            <aside class="ref-fleet-panel team-a" id="ref-panel-team-a">
+              <div class="ref-fleet-header">
+                <div class="ref-team-identity">
+                  <div class="ref-team-logo-wrap">
+                    <img id="ref-team-a-logo" class="alliance-logo-img hidden" alt="Team A Logo" />
+                    <span id="ref-team-a-fallback" class="ref-logo-fallback">A</span>
+                  </div>
+                  <div class="ref-team-meta">
+                    <span class="ref-team-tag">TEAM A MARSHALLING</span>
+                    <span class="ref-team-name" id="ref-team-a-name">BLUE FLEET</span>
+                  </div>
+                </div>
+                <div class="ref-points-wrap">
+                  <div class="ref-points-badge valid" id="ref-team-a-points-badge">
+                    <span class="pts-val" id="ref-team-a-total-pts">0</span>
+                    <span class="pts-max">/ 200 PTS</span>
+                  </div>
+                  <span class="ref-ship-count" id="ref-team-a-ship-count">0 / 10 Hulls</span>
+                </div>
+              </div>
+
+              <div class="ref-slots-toolbar">
+                <span class="ref-slots-subtitle">REFEREE HULL AUDIT (10 SLOTS)</span>
+                <button type="button" class="ref-btn-action" id="btn-clear-comp-a" title="Clear Team A Comp">CLEAR</button>
+              </div>
+
+              <!-- 10 Slots for Team A -->
+              <div class="ref-slots-list" id="ref-slots-team-a"></div>
+            </aside>
+
+            <!-- Center Clock Stage -->
+            <div class="clock-stage">
+              <!-- Warmup Banner -->
+              <div class="warmup-box" id="warmup-box">
+                <div class="warmup-badge">WARMUP COUNTDOWN</div>
+                <div class="warmup-clock" id="warmup-clock">01:00</div>
+                <div class="warmup-note">Synchronized future timestamp target • 60-second fleet preparation</div>
+              </div>
+
+              <!-- Primary Tournament Scrim Timer Display -->
+              <div class="primary-timer-panel">
+                <div class="timer-meta-bar">
+                  <span class="timer-title">ALLIANCE TOURNAMENT SCRIM CLOCK</span>
+                  <span class="timer-phase-badge" id="match-status-badge">STANDBY</span>
+                </div>
+
+                <div class="digital-display-wrapper">
+                  <div class="digital-clock" id="main-match-timer">10:00</div>
+                  <div class="digital-clock-sub" id="timer-subtext">SCRIM TIME REMAINING (10:00 COUNTDOWN)</div>
+                </div>
+              </div>
+
+              <!-- Resignation / Status Result Banner -->
+              <div class="result-banner hidden" id="result-banner">
+                <div class="result-title" id="result-title">SCRIM CONCLUDED</div>
+                <div class="result-timestamp" id="result-timestamp">Scrim ended at 00:00</div>
+              </div>
+
+              <!-- Scrim Control Actions -->
+              <div class="timer-controls">
+                <button id="btn-ready-toggle" class="scrim-btn btn-secondary">
+                  <span class="btn-icon">✓</span>
+                  <span>READY UP</span>
+                </button>
+                <button id="btn-start-warmup" class="scrim-btn btn-primary">
+                  <span class="btn-icon">▶</span>
+                  <span>START WARMUP (60s)</span>
+                </button>
+                <button id="btn-concede" class="scrim-btn btn-danger">
+                  <span class="btn-icon">⚑</span>
+                  <span>RESIGN SCRIM</span>
+                </button>
+                <button id="btn-popout-timer-secondary" class="scrim-btn btn-secondary" title="Pop Out Floating HUD (Designed for placing over your EVE Online client • Always-on-Top)">
+                  <span class="btn-icon">↗</span>
+                  <span>POP OUT TIMER</span>
+                </button>
+                <button id="btn-reset-match" class="scrim-btn btn-ghost">
+                  <span class="btn-icon">↺</span>
+                  <span>RESET SCRIM</span>
+                </button>
+              </div>
+
+              <!-- Pilot / FC Instruction: Popout Overlay Placement -->
+              <div class="popout-eve-instruction-banner">
+                <span class="eve-hint-icon">🎮</span>
+                <span class="eve-hint-text"><strong>FC & Pilot Overlay:</strong> The popped-out floating timer HUD is designed to be placed directly over your EVE Online game client (pinned <em>Always-on-Top</em>).</span>
+              </div>
+
+              <!-- Unified Ban Set Card at the bottom in the middle -->
+              <div class="timer-center-bans-card" id="timer-center-bans-card">
+                <div class="center-bans-header">
+                  <div class="center-bans-title-wrap">
+                    <span class="center-bans-badge">ACTIVE SET</span>
+                    <span class="center-bans-title" id="center-bans-match-title">MATCH 1 BANS & FLAGSHIPS</span>
+                  </div>
+                  <span class="center-bans-rule-hint">Banned non-flagships cannot be selected in fleet comps</span>
+                </div>
+
+                <div class="center-bans-body">
+                  <!-- Team A Side -->
+                  <div class="center-bans-team team-a">
+                    <div class="center-bans-team-meta">
+                      <span class="team-label team-a" id="center-bans-team-a-name">BLUE FLEET</span>
+                      <button type="button" class="center-flagship-btn" id="ref-flagship-pill-a" title="Designate / View Team A Flagship (Immune to Bans)">
+                        <span class="fs-icon">⚓</span>
+                        <span class="fs-name" id="ref-flagship-name-a">NO FLAGSHIP</span>
+                        <span class="fs-badge">IMMUNE</span>
+                      </button>
+                    </div>
+                    <div class="center-bans-chips" id="ref-bans-chips-a"></div>
+                  </div>
+
+                  <!-- Center VS Divider -->
+                  <div class="center-bans-divider">
+                    <span class="center-vs-badge">VS</span>
+                    <span class="center-order-badge" id="center-bans-order-badge">A B B A A B</span>
+                  </div>
+
+                  <!-- Team B Side -->
+                  <div class="center-bans-team team-b">
+                    <div class="center-bans-team-meta">
+                      <button type="button" class="center-flagship-btn" id="ref-flagship-pill-b" title="Designate / View Team B Flagship (Immune to Bans)">
+                        <span class="fs-icon">⚓</span>
+                        <span class="fs-name" id="ref-flagship-name-b">NO FLAGSHIP</span>
+                        <span class="fs-badge">IMMUNE</span>
+                      </button>
+                      <span class="team-label team-b" id="center-bans-team-b-name">RED FLEET</span>
+                    </div>
+                    <div class="center-bans-chips" id="ref-bans-chips-b"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: Team B Referee Fleet Marshalling -->
+            <aside class="ref-fleet-panel team-b" id="ref-panel-team-b">
+              <div class="ref-fleet-header">
+                <div class="ref-team-identity">
+                  <div class="ref-team-logo-wrap">
+                    <img id="ref-team-b-logo" class="alliance-logo-img hidden" alt="Team B Logo" />
+                    <span id="ref-team-b-fallback" class="ref-logo-fallback">B</span>
+                  </div>
+                  <div class="ref-team-meta">
+                    <span class="ref-team-tag">TEAM B MARSHALLING</span>
+                    <span class="ref-team-name" id="ref-team-b-name">RED FLEET</span>
+                  </div>
+                </div>
+                <div class="ref-points-wrap">
+                  <div class="ref-points-badge valid" id="ref-team-b-points-badge">
+                    <span class="pts-val" id="ref-team-b-total-pts">0</span>
+                    <span class="pts-max">/ 200 PTS</span>
+                  </div>
+                  <span class="ref-ship-count" id="ref-team-b-ship-count">0 / 10 Hulls</span>
+                </div>
+              </div>
+
+              <div class="ref-slots-toolbar">
+                <span class="ref-slots-subtitle">REFEREE HULL AUDIT (10 SLOTS)</span>
+                <button type="button" class="ref-btn-action" id="btn-clear-comp-b" title="Clear Team B Comp">CLEAR</button>
+              </div>
+
+              <!-- 10 Slots for Team B -->
+              <div class="ref-slots-list" id="ref-slots-team-b"></div>
+            </aside>
+          </div>
+
+          <!-- Datalist for Fast Hull Autocomplete in Referee Slots -->
+          <datalist id="tournament-ships-datalist"></datalist>
+        </div>
+      </section>
+    </main>
+
+        <!-- Tactical Toast Notification for Rule Alerts (e.g. Flagships immune) -->
+        <div id="tactical-toast" class="tactical-toast hidden" role="alert"></div>
+
+        <!-- Flagship Designation Modal Dialog -->
+        <div id="flagship-modal" class="flagship-modal-backdrop hidden" role="dialog" aria-labelledby="flagship-modal-title" aria-modal="true">
+          <div class="flagship-modal-dialog">
+            <div class="modal-header">
+              <div class="modal-title-group">
+                <h3 id="flagship-modal-title">DESIGNATE TEAM A FLAGSHIP</h3>
+                <span class="modal-subtitle">Battleships only (Bhaalgorn ineligible) • Under official AT rules, flagships cannot be banned</span>
+              </div>
+              <button id="btn-close-flagship-modal" class="modal-close-btn" title="Close">✕</button>
+            </div>
+            <div class="modal-search-row">
+              <input type="text" id="flagship-search-input" class="search-input modal-search" placeholder="Filter battleships (e.g. Leshak, Nightmare, Armageddon, Typhoon)..." />
+              <button id="btn-clear-flagship" class="action-btn btn-clear-flagship">REMOVE FLAGSHIP</button>
+            </div>
+            <div class="flagship-grid" id="flagship-selection-grid"></div>
+          </div>
+        </div>
+
+        <!-- All 5 Sets Overview Modal Dialog -->
+        <div id="all-sets-modal" class="flagship-modal-backdrop hidden" role="dialog" aria-labelledby="all-sets-modal-title" aria-modal="true">
+          <div class="all-sets-modal-dialog all-sets-dialog">
+            <div class="modal-header">
+              <div class="modal-title-group">
+                <h3 id="all-sets-modal-title">ALL 5 SCRIM SETS OVERVIEW</h3>
+                <span class="modal-subtitle">Full 5-match tournament series summary • Serpentine bans & flagships</span>
+              </div>
+              <button id="btn-close-all-sets-modal" class="modal-close-btn" title="Close">✕</button>
+            </div>
+            <div class="all-sets-cards-grid" id="all-sets-cards-container"></div>
+            <div class="all-sets-footer">
+              <button id="btn-modal-copy-summary" class="action-btn">COPY SUMMARY</button>
+              <button id="btn-modal-clear-all" class="action-btn btn-danger-subtle">RESET ALL 5 SETS</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fenris Creations Intellectual Property & EULA Notice Dialog -->
+        <div id="legal-modal" class="flagship-modal-backdrop hidden" role="dialog" aria-labelledby="legal-modal-title" aria-modal="true">
+          <div class="flagship-modal-dialog legal-modal-dialog">
+            <div class="modal-header">
+              <div class="modal-title-group">
+                <h3 id="legal-modal-title">FENRIS CREATIONS INTELLECTUAL PROPERTY & EULA NOTICE</h3>
+                <span class="modal-subtitle">Legal notice & community usage compliance under Fenris Creations hf. terms</span>
+              </div>
+              <button id="btn-close-legal-modal" class="modal-close-btn" title="Close">✕</button>
+            </div>
+            <div class="legal-modal-body">
+              <div class="legal-callout-banner">
+                <div class="legal-callout-icon">⚖</div>
+                <div class="legal-callout-text">
+                  <strong>Official Property Notice:</strong> All EVE Online images, 3D ship models, hull renders, inventory icons, and alliance logos are the intellectual property of <strong>Fenris Creations hf.</strong>
+                </div>
+              </div>
+
+              <div class="legal-sections">
+                <div class="legal-section">
+                  <div class="legal-section-title">1. TRADEMARK & COPYRIGHT OWNERSHIP</div>
+                  <p>
+                    <em>EVE Online</em> and the <em>EVE</em> logo are registered trademarks of <strong>Fenris Creations hf.</strong> (formerly CCP Games). All rights reserved worldwide. All brand identifiers, ship designations, faction insignias, and tournament branding elements remain the exclusive property of Fenris Creations hf.
+                  </p>
+                </div>
+
+                <div class="legal-section">
+                  <div class="legal-section-title">2. SHIP RENDERS & DIGITAL ASSETS</div>
+                  <p>
+                    All ship renders, hull graphics, inventory artwork, and alliance logos displayed across this application—including assets retrieved via official developer endpoints (<code>images.evetech.net</code> and <code>esi.evetech.net</code>)—are copyrighted works of <strong>Fenris Creations hf.</strong> No commercial license or intellectual property transfer is implied or granted.
+                  </p>
+                </div>
+
+                <div class="legal-section">
+                  <div class="legal-section-title">3. EULA & CONTENT CREATION POLICY COMPLIANCE</div>
+                  <p>
+                    This utility is an independent, non-commercial community tool built for teams, fleet commanders, and spectators participating in <strong>Alliance Tournament XXII</strong>. It operates in strict compliance with the <strong>Fenris Creations End User License Agreement (EULA)</strong> and <strong>Content Creation Terms</strong> governing fan projects and non-monetized third-party tournament utilities.
+                  </p>
+                </div>
+
+                <div class="legal-section">
+                  <div class="legal-section-title">4. DISCLAIMER OF ENDORSEMENT</div>
+                  <p>
+                    <strong>Fenris Creations hf.</strong> has not endorsed, sponsored, approved, or audited this application. The developer is solely responsible for this tool's implementation, and Fenris Creations hf. assumes no liability for its operation or match results.
+                  </p>
+                </div>
+              </div>
+
+              <div class="legal-modal-footer">
+                <span class="legal-footer-cite">EVE Online © Fenris Creations hf. • Non-Commercial AT XXII Fan Utility</span>
+                <button type="button" id="btn-dismiss-legal" class="scrim-btn btn-primary legal-dismiss-btn">
+                  <span>✓ ACKNOWLEDGE & CLOSE</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tournament Session & Role Permissions Modal Dialog -->
+        <div id="session-modal" class="flagship-modal-backdrop hidden" role="dialog" aria-labelledby="session-modal-title" aria-modal="true">
+          <div class="flagship-modal-dialog session-modal-dialog">
+            <div class="modal-header">
+              <div class="modal-title-group">
+                <h3 id="session-modal-title">TOURNAMENT SESSION & DRAFTING ROLES</h3>
+                <span class="modal-subtitle">Enforce role-based drafting permissions • Prevent unauthorized team bans</span>
+              </div>
+              <button id="btn-close-session-modal" class="modal-close-btn" title="Close">✕</button>
+            </div>
+
+            <div class="session-modal-body">
+              <!-- Section 1: Session Room Code -->
+              <div class="session-card-section">
+                <div class="section-title-bar">
+                  <span class="section-badge">1</span>
+                  <span class="section-title">ACTIVE TOURNAMENT SESSION</span>
+                </div>
+                <div class="session-code-row">
+                  <div class="session-code-input-wrap">
+                    <label for="input-session-id" class="input-tiny-label">SESSION ROOM CODE</label>
+                    <input type="text" id="input-session-id" class="session-input" placeholder="e.g. AT22-X7KF" maxlength="16" />
+                  </div>
+                  <div class="session-code-input-wrap">
+                    <label for="input-session-key" class="input-tiny-label">ACCESS KEY / SECRET (OPTIONAL)</label>
+                    <input type="text" id="input-session-key" class="session-input" placeholder="e.g. Captain / Team Secret" />
+                  </div>
+                  <button type="button" id="btn-join-session" class="action-btn btn-primary" title="Connect to this session room">
+                    <span>CONNECT / JOIN</span>
+                  </button>
+                  <button type="button" id="btn-generate-session" class="action-btn" title="Create a fresh scrim session as Captain A">
+                    <span>⚡ CREATE SESSION</span>
+                  </button>
+                </div>
+                <span class="session-help-text">Live peer-to-peer scrim sessions synchronize bans, flagships, and match timers across all 20 players without a central server.</span>
+              </div>
+
+              <!-- Section 2: Choose Your Participant Role -->
+              <div class="session-card-section">
+                <div class="section-title-bar">
+                  <span class="section-badge">2</span>
+                  <span class="section-title">PARTICIPANT ROLE & AUTHORITY STATUS</span>
+                </div>
+                <div class="roles-grid">
+                  <!-- Referee / Host -->
+                  <div class="role-card active" data-role="REFEREE" id="role-card-referee">
+                    <div class="role-card-icon">🛡️</div>
+                    <div class="role-card-content">
+                      <div class="role-card-title">TOURNAMENT REFEREE / HOST (CAPTAIN A)</div>
+                      <div class="role-card-desc">Primary session coordinator. Can ban for either team, set flagships, adjust fleet comps, and manage match clocks.</div>
+                      <span class="role-perm-tag perm-full">FULL ACCESS</span>
+                    </div>
+                  </div>
+
+                  <!-- Team A Captain -->
+                  <div class="role-card" data-role="TEAM_A" id="role-card-team-a">
+                    <div class="role-card-icon">🔷</div>
+                    <div class="role-card-content">
+                      <div class="role-card-title"><span id="role-team-a-label">TEAM A CAPTAIN</span> (BLUE FLEET)</div>
+                      <div class="role-card-desc">Can only draft bans on Team A's turns (Turns 1, 4, 5). Can designate Team A flagship and edit Team A fleet comp. Cannot edit Team B.</div>
+                      <span class="role-perm-tag perm-team-a">TEAM A DRAFTER ONLY</span>
+                    </div>
+                  </div>
+
+                  <!-- Team B Captain -->
+                  <div class="role-card" data-role="TEAM_B" id="role-card-team-b">
+                    <div class="role-card-icon">🔶</div>
+                    <div class="role-card-content">
+                      <div class="role-card-title"><span id="role-team-b-label">TEAM B CAPTAIN</span> (CO-HOST)</div>
+                      <div class="role-card-desc">Secondary session coordinator. Can draft Team B bans, designate Team B flagship, concede Team B, and failover if Host drops.</div>
+                      <span class="role-perm-tag perm-team-b">TEAM B DRAFTER / CO-HOST</span>
+                    </div>
+                  </div>
+
+                  <!-- Spectator / Pilot -->
+                  <!-- Ring Cleaner -->
+                  <div class="role-card" data-role="CLEANER" id="role-card-cleaner">
+                    <div class="role-card-icon">🧹</div>
+                    <div class="role-card-content">
+                      <div class="role-card-title">ARENA RING CLEANER</div>
+                      <div class="role-card-desc">Arena grid maintenance duty (clearing wrecks, canisters & drones). Receives synchronized match clock & popout HUD.</div>
+                      <span class="role-perm-tag perm-view">GRID CLEANER</span>
+                    </div>
+                  </div>
+
+                  <!-- Spectator / Observer -->
+                  <div class="role-card" data-role="SPECTATOR" id="role-card-spectator">
+                    <div class="role-card-icon">👁️</div>
+                    <div class="role-card-content">
+                      <div class="role-card-title">SPECTATOR / OBSERVER</div>
+                      <div class="role-card-desc">Read-only observation mode for coaches, casters, and scouts. Real-time bans, fleet comps, and synchronized clock.</div>
+                      <span class="role-perm-tag perm-view">READ ONLY</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Section 3: Shareable Invitation Links -->
+              <div class="session-card-section">
+                <div class="section-title-bar">
+                  <span class="section-badge">3</span>
+                  <span class="section-title">1-CLICK INVITE LINKS (SECRET CREDENTIALS EMBEDDED)</span>
+                </div>
+                <div class="share-links-table">
+                  <!-- Referee / Host -->
+                  <div class="share-link-item">
+                    <button type="button" class="action-btn btn-share-link" id="btn-copy-referee-link">
+                      <span>🛡️ COPY REFEREE LINK</span>
+                    </button>
+                    <button type="button" class="action-btn btn-rotate-link" id="btn-rotate-referee-key" title="Regenerate Referee Access Key (active players remain connected)">
+                      <span>↻ ROTATE</span>
+                    </button>
+                  </div>
+                  <!-- Captain B -->
+                  <div class="share-link-item">
+                    <button type="button" class="action-btn btn-share-link" id="btn-copy-captain-b-link">
+                      <span>👑 COPY CAPTAIN B (CO-HOST) LINK</span>
+                    </button>
+                    <button type="button" class="action-btn btn-rotate-link" id="btn-rotate-captain-b-key" title="Regenerate Captain B Access Key">
+                      <span>↻ ROTATE</span>
+                    </button>
+                  </div>
+                  <!-- Team A -->
+                  <div class="share-link-item">
+                    <button type="button" class="action-btn btn-share-link" id="btn-copy-team-a-link">
+                      <span>🔷 COPY TEAM A (PILOTS & SUBS) LINK</span>
+                    </button>
+                    <button type="button" class="action-btn btn-rotate-link" id="btn-rotate-team-a-key" title="Regenerate Team A Access Key">
+                      <span>↻ ROTATE</span>
+                    </button>
+                  </div>
+                  <!-- Team B -->
+                  <div class="share-link-item">
+                    <button type="button" class="action-btn btn-share-link" id="btn-copy-team-b-link">
+                      <span>🔶 COPY TEAM B (PILOTS & SUBS) LINK</span>
+                    </button>
+                    <button type="button" class="action-btn btn-rotate-link" id="btn-rotate-team-b-key" title="Regenerate Team B Access Key">
+                      <span>↻ ROTATE</span>
+                    </button>
+                  </div>
+                  <!-- Arena Ring Cleaner -->
+                  <div class="share-link-item">
+                    <button type="button" class="action-btn btn-share-link" id="btn-copy-cleaner-link">
+                      <span>🧹 COPY RING CLEANER LINK</span>
+                    </button>
+                    <button type="button" class="action-btn btn-rotate-link" id="btn-rotate-cleaner-key" title="Regenerate Ring Cleaner Access Key">
+                      <span>↻ ROTATE</span>
+                    </button>
+                  </div>
+                  <!-- Spectator / Observer -->
+                  <div class="share-link-item">
+                    <button type="button" class="action-btn btn-share-link" id="btn-copy-spectator-link">
+                      <span>👁️ COPY SPECTATOR LINK</span>
+                    </button>
+                    <button type="button" class="action-btn btn-rotate-link" id="btn-rotate-spectator-key" title="Regenerate Spectator Access Key">
+                      <span>↻ ROTATE</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="share-links-bottom-row">
+                  <button type="button" class="action-btn btn-share-link highlight" id="btn-copy-all-join-info">
+                    <span>📋 COPY FULL JOIN INFO FOR FLEET CHAT</span>
+                  </button>
+                  <button type="button" class="action-btn btn-danger-subtle" id="btn-close-session" title="Conclude and close this scrim session permanently">
+                    <span>⛔ CLOSE SCRIM SESSION</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="session-modal-footer">
+              <span class="session-footer-note" id="session-current-summary">Connected as: 🛡️ TOURNAMENT REFEREE in SESSION AT-4821</span>
+              <button type="button" id="btn-confirm-session-role" class="scrim-btn btn-primary">
+                <span>✓ APPLY & CLOSE</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Authoritative Captain Resignation Confirmation Modal (Phase 12) -->
+        <div id="resign-confirm-modal" class="flagship-modal-backdrop hidden" role="dialog" aria-labelledby="resign-modal-title" aria-modal="true">
+          <div class="flagship-modal-dialog" style="max-width: 440px;">
+            <div class="modal-header">
+              <div class="modal-title-group">
+                <h3 id="resign-modal-title">CONFIRM RESIGN?</h3>
+                <span class="modal-subtitle">Concede active scrim match for your team</span>
+              </div>
+              <button id="btn-close-resign-modal" class="modal-close-btn" title="Cancel">✕</button>
+            </div>
+            <div style="padding: 16px; font-size: 13px; color: var(--text-secondary); line-height: 1.5;">
+              Are you sure you want to concede this match for <strong id="resign-modal-team-name" style="color: var(--accent-rose);">YOUR TEAM</strong>? This will immediately conclude the scrim and record the official elapsed match time for all participants.
+            </div>
+            <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding: 12px 16px; border-top: 1px solid var(--border-subtle);">
+              <button type="button" id="btn-cancel-resign" class="action-btn">CANCEL</button>
+              <button type="button" id="btn-confirm-resign" class="scrim-btn btn-danger" style="background: var(--accent-rose); border-color: var(--accent-rose); color: white;">
+                <span>CONFIRM RESIGN</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- FIRST-RUN SETUP WIZARD MODAL (Phase 3, 4, 5, 6) -->
+        <div id="setup-modal" class="flagship-modal-backdrop hidden" role="dialog" aria-labelledby="setup-modal-title" aria-modal="true">
+          <div class="flagship-modal-dialog setup-modal-dialog">
+            <div class="modal-header setup-header">
+              <div class="modal-title-group">
+                <span class="setup-brand-badge">ATXXII UTILITY</span>
+                <h3 id="setup-modal-title">PILOT SETUP & LOCAL PROFILE</h3>
+                <span class="modal-subtitle">Identify your default drafting role and public EVE Online pilot identity</span>
+              </div>
+            </div>
+
+            <div class="setup-modal-body">
+              <!-- STEP 1: ROLE SELECTION -->
+              <div id="setup-step-role" class="setup-step-pane">
+                <div class="setup-step-header">
+                  <div class="setup-step-indicator">STEP 1 OF 2</div>
+                  <h4 class="setup-step-title">WHO ARE YOU?</h4>
+                  <p class="setup-step-desc">
+                    Choose your primary tournament role. This sets your local default layout and participant display.
+                  </p>
+                </div>
+
+                <div class="setup-roles-grid">
+                  <div class="setup-role-card" data-setup-role="CAPTAIN" id="setup-role-captain">
+                    <div class="setup-role-icon">👑</div>
+                    <div class="setup-role-info">
+                      <div class="setup-role-name">SETUP AS CAPTAIN</div>
+                      <div class="setup-role-sub">Team captain, drafter, or match host</div>
+                    </div>
+                    <span class="setup-role-action-tag">SELECT</span>
+                  </div>
+
+                  <div class="setup-role-card active" data-setup-role="MEMBER" id="setup-role-member">
+                    <div class="setup-role-icon">🔷</div>
+                    <div class="setup-role-info">
+                      <div class="setup-role-name">SETUP AS MEMBER</div>
+                      <div class="setup-role-sub">Line pilot, reserve substitute, or scout</div>
+                    </div>
+                    <span class="setup-role-action-tag">SELECT</span>
+                  </div>
+
+                  <div class="setup-role-card" data-setup-role="REFEREE" id="setup-role-referee">
+                    <div class="setup-role-icon">🛡️</div>
+                    <div class="setup-role-info">
+                      <div class="setup-role-name">SETUP AS REFEREE</div>
+                      <div class="setup-role-sub">Tournament organizer, marshal, or caster</div>
+                    </div>
+                    <span class="setup-role-action-tag">SELECT</span>
+                  </div>
+                </div>
+
+                <div class="setup-security-notice">
+                  <span class="notice-icon">ℹ️</span>
+                  <span class="notice-text">
+                    <strong>Local Preference Only:</strong> This role is for your local display preference. Live scrim match permissions are always determined securely by the session invite key.
+                  </span>
+                </div>
+
+                <div class="setup-footer-row">
+                  <div></div>
+                  <button type="button" id="btn-setup-role-next" class="scrim-btn btn-primary">
+                    <span>NEXT: EVE CHARACTER →</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- STEP 2: EVE CHARACTER LOOKUP -->
+              <div id="setup-step-lookup" class="setup-step-pane hidden">
+                <div class="setup-step-header">
+                  <div class="setup-step-indicator">STEP 2 OF 2</div>
+                  <h4 class="setup-step-title">EVE CHARACTER NAME</h4>
+                  <p class="setup-step-desc">
+                    Type your in-game character name. The app will resolve your public character, corporation, and alliance.
+                  </p>
+                </div>
+
+                <div class="setup-lookup-box">
+                  <div class="setup-input-wrap">
+                    <label for="setup-char-input" class="input-tiny-label">CHARACTER NAME</label>
+                    <div class="setup-input-row">
+                      <input type="text" id="setup-char-input" class="session-input setup-search-input" placeholder="e.g. King Voodoo" maxlength="64" />
+                      <button type="button" id="btn-setup-do-lookup" class="action-btn btn-primary setup-lookup-btn">
+                        <span>LOOK UP CHARACTER</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div id="setup-lookup-status" class="setup-lookup-status hidden">
+                    <span id="setup-status-spinner" class="status-spinner hidden"></span>
+                    <span id="setup-status-message" class="status-text">Resolving public ESI identity...</span>
+                  </div>
+
+                  <div class="setup-privacy-banner">
+                    <span class="privacy-icon">🔒</span>
+                    <span class="privacy-text">
+                      <strong>Public EVE Data Only:</strong> This lookup uses public EVE Online ESI endpoints only. No EVE login, password, or private ESI scopes are required.
+                    </span>
+                  </div>
+                </div>
+
+                <div class="setup-footer-row">
+                  <button type="button" id="btn-setup-back-to-step1" class="action-btn">
+                    <span>← BACK</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- STEP 3: CONFIRM IDENTITY -->
+              <div id="setup-step-confirm" class="setup-step-pane hidden">
+                <div class="setup-step-header">
+                  <div class="setup-step-indicator">PROFILE CONFIRMATION</div>
+                  <h4 class="setup-step-title">CONFIRM YOUR IDENTITY</h4>
+                  <p class="setup-step-desc">
+                    Review your resolved tournament public pilot credentials.
+                  </p>
+                </div>
+
+                <div class="setup-confirm-card">
+                  <div class="confirm-portrait-wrap">
+                    <img id="setup-confirm-portrait" class="confirm-portrait-img" src="" alt="Character Portrait" />
+                    <span class="confirm-role-tag" id="setup-confirm-role-tag">CAPTAIN</span>
+                  </div>
+
+                  <div class="confirm-details">
+                    <div class="confirm-char-name" id="setup-confirm-char-name">KING VOODOO</div>
+                    <div class="confirm-meta-row">
+                      <span class="meta-label">CORPORATION:</span>
+                      <span class="meta-val highlight" id="setup-confirm-corp-val">Wok the Dog [WOK]</span>
+                    </div>
+                    <div class="confirm-meta-row">
+                      <span class="meta-label">ALLIANCE:</span>
+                      <span class="meta-val" id="setup-confirm-alliance-val">NAGA Please [NAGA]</span>
+                    </div>
+                    <div class="confirm-meta-row">
+                      <span class="meta-label">CHARACTER ID:</span>
+                      <span class="meta-val mono" id="setup-confirm-id-val">#98765432</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="setup-footer-row">
+                  <button type="button" id="btn-setup-back-to-lookup" class="action-btn">
+                    <span>← CHANGE CHARACTER</span>
+                  </button>
+                  <button type="button" id="btn-setup-finish" class="scrim-btn btn-primary setup-finish-btn">
+                    <span>✓ CONFIRM & ENTER ATXXII</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PROFILE SETTINGS MODAL (Phase 11) -->
+        <div id="profile-modal" class="flagship-modal-backdrop hidden" role="dialog" aria-labelledby="profile-modal-title" aria-modal="true">
+          <div class="flagship-modal-dialog profile-settings-dialog">
+            <div class="modal-header">
+              <div class="modal-title-group">
+                <h3 id="profile-modal-title">LOCAL PILOT PROFILE</h3>
+                <span class="modal-subtitle">Manage your local participant preferences & public EVE Online identity</span>
+              </div>
+              <button id="btn-close-profile-modal" class="modal-close-btn" title="Close">✕</button>
+            </div>
+
+            <div class="profile-modal-body">
+              <div class="profile-card-overview">
+                <img id="profile-modal-portrait" class="profile-modal-portrait-img" src="" alt="Portrait" />
+                <div class="profile-modal-char-info">
+                  <div class="profile-modal-char-name" id="profile-modal-char-name">KING VOODOO</div>
+                  <div class="profile-modal-meta" id="profile-modal-corp">Wok the Dog [WOK]</div>
+                  <div class="profile-modal-meta" id="profile-modal-alliance">NAGA Please [NAGA]</div>
+                  <div class="profile-modal-meta-sub" id="profile-modal-id">Character ID: 98765432</div>
+                </div>
+              </div>
+
+              <!-- Preferred Role Section -->
+              <div class="profile-settings-section">
+                <div class="settings-sec-title">PREFERRED LOCAL ROLE</div>
+                <div class="profile-role-switcher">
+                  <button type="button" class="action-btn btn-role-choice" data-role="CAPTAIN" id="btn-profile-role-captain">
+                    <span>👑 CAPTAIN</span>
+                  </button>
+                  <button type="button" class="action-btn btn-role-choice" data-role="MEMBER" id="btn-profile-role-member">
+                    <span>🔷 MEMBER</span>
+                  </button>
+                  <button type="button" class="action-btn btn-role-choice" data-role="REFEREE" id="btn-profile-role-referee">
+                    <span>🛡️ REFEREE</span>
+                  </button>
+                </div>
+                <span class="settings-hint">This role sets your local UI preference. Match drafting permissions are governed strictly by the session invite key.</span>
+              </div>
+
+              <!-- Actions Section -->
+              <div class="profile-settings-section">
+                <div class="settings-sec-title">PROFILE ACTIONS</div>
+                <div class="profile-actions-row">
+                  <button type="button" id="btn-profile-refresh-esi" class="action-btn">
+                    <span>↻ REFRESH PUBLIC ESI DATA</span>
+                  </button>
+                  <button type="button" id="btn-profile-rerun-setup" class="action-btn btn-danger-subtle">
+                    <span>⚡ SWITCH CHARACTER / RERUN SETUP</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="profile-modal-footer">
+              <span class="profile-footer-cite">Public EVE Online identity • No OAuth credentials stored</span>
+              <button type="button" id="btn-close-profile" class="scrim-btn btn-primary">
+                <span>✓ CLOSE</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+
+    <!-- Tactical Footer -->
+    <footer class="app-footer">
+      <div class="footer-left">
+        <span class="status-indicator-dot active"></span>
+        <span class="footer-status-text">Client Standalone Ready</span>
+      </div>
+      <div class="footer-center">
+        <span>All EVE Online ship images, renders & logos property of <strong>Fenris Creations hf.</strong></span>
+        <button type="button" id="btn-footer-legal" class="footer-legal-btn" title="View Fenris Creations Intellectual Property & EULA Notice">LEGAL / EULA</button>
+      </div>
+      <div class="footer-right">
+        <span class="footer-clock" id="local-clock">00:00:00 UTC</span>
+        <div class="footer-credit">
+          <img src="./src/assets/king-voodoo-logo.jpg" alt="King Voodoo" class="footer-credit-logo" />
+          <span class="footer-credit-text">Designed by <strong>King Voodoo</strong></span>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Dedicated Pop-Out Floating Timer Window HUD -->
+  <div id="popout-container" class="popout-container hidden">
+    <!-- Draggable Header Region -->
+    <div class="popout-drag-bar" data-tauri-drag-region>
+      <div class="popout-drag-handle" data-tauri-drag-region>
+        <span class="popout-brand" data-tauri-drag-region>AT XXII SCRIM TIMER</span>
+      </div>
+      <div class="popout-bar-actions">
+        <button id="popout-btn-pin" class="popout-btn-tool pinned" title="Always-on-Top">📌</button>
+        <button id="popout-btn-min" class="popout-btn-tool" title="Minimize Window">_</button>
+        <button id="popout-btn-close" class="popout-btn-tool close" title="Close / Dock Back">✕</button>
+      </div>
+    </div>
+
+    <!-- Popout Clock Body -->
+    <div class="popout-body">
+      <div class="popout-client-overlay-guide" title="Place this floating window directly over your EVE Online game client">
+        <span>OVERLAY HUD • POSITION OVER EVE CLIENT</span>
+      </div>
+
+      <div class="popout-phase-row">
+        <span id="popout-phase-badge" class="timer-phase-badge">STANDBY</span>
+        <span id="popout-warmup-display" class="popout-warmup-label">WARMUP: 01:00</span>
+      </div>
+
+      <div class="popout-timer-display" id="popout-main-clock">10:00</div>
+
+      <div class="popout-footer-controls">
+        <button id="popout-btn-start" class="popout-btn-action primary">START SCRIM</button>
+        <button id="popout-btn-resign" class="popout-btn-action danger">RESIGN</button>
+        <button id="popout-btn-reset" class="popout-btn-action ghost">RESET</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
